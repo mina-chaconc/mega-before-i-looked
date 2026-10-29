@@ -8,7 +8,7 @@
 
 **Tech Stack:** Node 22+, TypeScript strict, Hono JSX, Vitest, pnpm.
 
-**Spec:** `../../../plan.md`, `../../vision.md`, `../../styleguide.md`, `../../adr/`. The user approved the seven issue split and issue fields before repository creation.
+**Spec:** `../../plans/done/morning-digest.md`, `../../vision.md`, `../../styleguide.md`, `../../adr/`. The user approved the seven issue split and issue fields before repository creation.
 
 ## Global Constraints
 
