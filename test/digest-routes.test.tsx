@@ -72,6 +72,7 @@ describe('digest route regression coverage', () => {
       },
     },
     { name: 'empty night', contents: '', expected: emptyDigest },
+    { name: 'blank night', contents: ' \t\n\n ', expected: emptyDigest },
     {
       name: 'malformed and structurally invalid lines alongside a valid job',
       contents: `${JSON.stringify(event)}\nnot json\n${JSON.stringify({ ...event, status: 'unknown' })}\n\n`,
@@ -105,7 +106,10 @@ describe('digest route regression coverage', () => {
       row.lastStatus, row.lastError ?? '—', row.firstAt, row.lastAt,
     ]));
     if (digest.rows.length === 0) {
-      expect(html).toContain('>nothing ran</p>');
+      const message = expected.badLines > 0 ? 'no valid runs' : 'nothing ran';
+      const otherMessage = expected.badLines > 0 ? 'nothing ran' : 'no valid runs';
+      expect(html).toContain(`>${message}</p>`);
+      expect(html).not.toContain(`>${otherMessage}</p>`);
       expect(html).not.toContain('<table');
     }
     expect(html).not.toContain('<script');
@@ -119,6 +123,32 @@ describe('digest route regression coverage', () => {
       const response = await server.request(`${prefix}/${night}`);
       expect(response.status).toBe(404);
     }
+  });
+
+  it.each(['', ' \t\n '])('displays blank owner and error as dashes while preserving source value %j', async (blank) => {
+    writeFileSync(join(runsDir, `${night}.jsonl`), JSON.stringify({ ...event, owner: blank, error: blank }));
+    const server = app();
+    const page = await server.request(`/digest/${night}`);
+    const api = await server.request(`/api/digest/${night}`);
+
+    expect(page.status).toBe(200);
+    expect(api.status).toBe(200);
+    expect(await api.json()).toEqual({
+      night, badLines: 0, counts: { ok: 1, retry: 0, fail: 0 },
+      rows: [{ ...singleRow, owner: blank, lastError: blank }],
+    });
+    expect(htmlRows(await page.text())).toEqual([
+      ['zeta', '—', '1', '0', 'ok', '—', firstAt, firstAt],
+    ]);
+  });
+
+  it('preserves surrounding whitespace in nonblank owner and error display', async () => {
+    writeFileSync(join(runsDir, `${night}.jsonl`), JSON.stringify({ ...event, owner: ' ops ', error: ' failure ' }));
+    const response = await app().request(`/digest/${night}`);
+
+    expect(htmlRows(await response.text())).toEqual([
+      ['zeta', ' ops ', '1', '0', 'ok', ' failure ', firstAt, firstAt],
+    ]);
   });
 
   it.each([

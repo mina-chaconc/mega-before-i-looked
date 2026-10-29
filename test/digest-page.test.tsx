@@ -126,17 +126,17 @@ describe('digest HTML route', () => {
     }
   });
 
-  it('renders empty and all-invalid files as successful empty digests', async () => {
+  it('distinguishes empty and all-invalid nights in successful responses', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'rig-digest-page-'));
     temporaryDirectories.push(directory);
     writeFileSync(join(directory, '2026-10-28.jsonl'), '');
     writeFileSync(join(directory, '2026-10-27.jsonl'), 'not json\n');
     const app = createApp({ ...config, runsDir: directory });
-    for (const [night, count] of [['2026-10-28', 0], ['2026-10-27', 1]] as const) {
+    for (const [night, count, message] of [['2026-10-28', 0, 'nothing ran'], ['2026-10-27', 1, 'no valid runs']] as const) {
       const response = await app.request(`/digest/${night}`);
       expect(response.status).toBe(200);
       const html = await response.text();
-      expect(html).toContain('>nothing ran</p>');
+      expect(html).toContain(`>${message}</p>`);
       expect(html).toContain(`${count} bad line`);
     }
   });

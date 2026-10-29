@@ -6,7 +6,7 @@ export function DigestPage({ digest }: { digest: NightDigest }) {
       <h1>digest · {digest.night}</h1>
       <p class="mute">{digest.badLines} {digest.badLines === 1 ? 'bad line' : 'bad lines'}</p>
       {digest.rows.length === 0 ? (
-        <p class="mute">nothing ran</p>
+        <p class="mute">{digest.badLines > 0 ? 'no valid runs' : 'nothing ran'}</p>
       ) : (
         <table>
           <thead>
@@ -18,9 +18,9 @@ export function DigestPage({ digest }: { digest: NightDigest }) {
           <tbody>
             {digest.rows.map((row) => (
               <tr class={row.retries >= 3 || row.hasFailure ? 'warn' : undefined}>
-                <td>{row.job}</td><td>{row.owner ?? '—'}</td>
+                <td>{row.job}</td><td>{row.owner?.trim() ? row.owner : '—'}</td>
                 <td>{row.runs}</td><td>{row.retries}</td>
-                <td>{row.lastStatus}</td><td>{row.lastError ?? '—'}</td>
+                <td>{row.lastStatus}</td><td>{row.lastError?.trim() ? row.lastError : '—'}</td>
                 <td>{row.firstAt}</td><td>{row.lastAt}</td>
               </tr>
             ))}
